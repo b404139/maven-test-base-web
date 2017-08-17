@@ -1,0 +1,141 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>cn.bigg</groupId>
+	<artifactId>maven-test-base-web</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>war</packaging>
+
+	<name>maven-test-base-web Maven Webapp</name>
+	<url>http://maven.apache.org</url>
+
+	<properties>
+		<maven.build.timestamp.format>yyyyMMdd</maven.build.timestamp.format>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>cn.bigg</groupId>
+			<artifactId>maven-test-base-jar</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+
+		<!-- 测试依赖版本号传递 -->
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjweaver</artifactId>
+			<version>1.8.2</version>
+		</dependency>
+
+	</dependencies>
+
+	<!-- 使用profiles定义多套打包配置 -->
+	<!-- 该配置也可以定义到用户/全局settings.xml，用于指定远程仓库等公共配置，未测试 -->
+	<profiles>
+		<profile>
+			<id>dev</id>
+			<activation>
+				<!-- 默认启用，否则使用mvn package –P dev显示指定 -->
+				<!-- 该配置可以指定为根据不同环境激活，如操作系统、jdk版本、系统环境变量等，未测试 -->
+				<!-- mvn help:active-profiles查看处于激活状态的profile -->
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<!-- 以下配置项，相当于运行时merge到pom.xml根节点下 -->
+			<build>
+				<filters>
+					<filter>src/main/resources/deploy/dev.properties</filter>
+				</filters>
+			</build>
+		</profile>
+		<profile>
+			<id>test</id>
+			<build>
+				<filters>
+					<filter>src/main/resources/deploy/test.properties</filter>
+				</filters>
+			</build>
+		</profile>
+		<profile>
+			<id>product</id>
+			<build>
+				<filters>
+					<filter>src/main/resources/deploy/product.properties</filter>
+				</filters>
+			</build>
+		</profile>
+	</profiles>
+
+	<build>
+		<filters>
+			<!-- 指定过滤参数所在的文件位置 -->
+			<filter>src/main/resources/deploy/base.properties</filter>
+		</filters>
+
+		<plugins>
+
+			<!-- war插件 -->
+			<plugin>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>3.1.0</version>
+				<configuration>
+					<encoding>UTF-8</encoding>
+					<warName>maven-test-base-web_${maven.build.timestamp}</warName>
+					<!-- 是否打包空目录 -->
+					<includeEmptyDirs>true</includeEmptyDirs>
+					<!-- 是否同时打出jar包，为true是同时打出XXX.war/XXX-classes.jar/[XXX-sources.jar -->
+					<!-- 便于子项目依赖该web工程中的代码，（否则找不到类，因为war包不能包含在类路径中） -->
+					<attachClasses>true</attachClasses>
+					<!-- 是否打包class路径。为true时，归档工程中的class文件，生成jar放到lib下，war包的class路径下不包含class文件 -->
+					<archiveClasses>false</archiveClasses>
+					<webResources>
+						<!-- 默认webapp下的文件都会被打包到war根目录，默认不过滤 -->
+						<resource>
+							<directory>src/main/webapp/jsp</directory>
+							<targetPath>jsp_package</targetPath>
+							<filtering>true</filtering>
+						</resource>
+						<resource>
+							<directory>src/main/resources/META-INF-EXT</directory>
+							<targetPath>META-INF</targetPath>
+							<filtering>true</filtering>
+						</resource>
+					</webResources>
+				</configuration>
+			</plugin>
+		</plugins>
+
+		<!-- 在process-resources阶段，maven-resources-plugin插件读取此标签配置 -->
+		<!-- 此标签可用于指定，哪些文件需要排除和过滤（默认不过滤） -->
+		<!-- 此标签只能影响WEB-INF\classes目录，不能影响war包根目录 -->
+		<!-- 默认src/main/resouces和src/test/resources文件夹下的全部文件都会被复制到target\classes -->
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>config/base-web-jdbc.properties</include>
+					<include>spring/*</include>
+				</includes>
+			</resource>
+			
+			<!-- 同一目录同时配置includes和excludes时，没有覆盖到的子文件会被打包，不会被过滤 -->
+			<!-- 空文件夹不会被打包 -->
+			<resource>
+				<directory>src/main/resources</directory>
+				<excludes>
+					<exclude>META-INF-EXT/*</exclude>
+					<exclude>deploy/*</exclude>
+				</excludes>
+			</resource>
+
+			<!-- src/main/resources之外的文件需要显式指定，否则不会被打包 -->
+			<resource>
+				<directory>other_files</directory>
+				<filtering>true</filtering>
+				<!-- 相对路径，相对于target/classes目录。打包后会放在WEB-INF\classes下 -->
+				<targetPath>other_files_package</targetPath>
+			</resource>
+		</resources>
+	</build>
+</project>
