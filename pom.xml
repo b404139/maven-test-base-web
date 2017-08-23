@@ -11,6 +11,7 @@
 	<url>http://maven.apache.org</url>
 
 	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.build.timestamp.format>yyyyMMdd</maven.build.timestamp.format>
 	</properties>
 
@@ -28,6 +29,11 @@
 			<version>1.8.2</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjweaver</artifactId>
+			<version>1.8.10</version>
+		</dependency>
 	</dependencies>
 
 	<!-- 使用profiles定义多套打包配置 -->
@@ -73,7 +79,6 @@
 		</filters>
 
 		<plugins>
-
 			<!-- war插件 -->
 			<plugin>
 				<artifactId>maven-war-plugin</artifactId>
@@ -118,7 +123,7 @@
 					<include>spring/*</include>
 				</includes>
 			</resource>
-			
+
 			<!-- 同一目录同时配置includes和excludes时，没有覆盖到的子文件会被打包，不会被过滤 -->
 			<!-- 空文件夹不会被打包 -->
 			<resource>
